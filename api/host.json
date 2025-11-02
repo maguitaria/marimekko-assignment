@@ -1,5 +1,6 @@
 {
   "version": "2.0",
+   "watchDirectories": [ "functions" ],
   "logging": {
     "applicationInsights": {
       "samplingSettings": {
@@ -9,11 +10,12 @@
     }
   },
   "extensions": {
-    "http": {"routePrefix": "api"}
+    "http": {
+      "routePrefix": "api"
+    }
   },
   "extensionBundle": {
     "id": "Microsoft.Azure.Functions.ExtensionBundle",
-    "version": "[4.*, 5.0.0)",
-    
+    "version": "[4.*, 5.0.0)"
   }
 }
