@@ -1,17 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchProducts } from "../../lib/api";
-import { auth } from "../../lib/auth";
-import { ProductCard } from "../../components/ProductCard";
+import { fetchProducts } from "@/lib/api";
+import { auth } from "@/lib/auth";
+import { ProductCard } from "@/components/ProductCard";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 export default function ProductsPage() {
-  const [{ products, clientName, error }, setState] = useState<{
-    products: any[];
-    clientName?: string;
-    error?: string;
-  }>({ products: [] });
+  const [{ products, clientName, error }, setState] = useState({
+    products: [] as any[],
+    clientName: "",
+    error: "",
+  });
 
   const router = useRouter();
 
@@ -23,51 +24,34 @@ export default function ProductsPage() {
     }
 
     fetchProducts(token)
-      .then((data) => setState({ products: data.products, clientName }))
-      .catch((err) => setState({ products: [], error: err.message }));
+      .then((data) => setState({ products: data.products, clientName, error: "" }))
+      .catch((err) => setState({ products: [], clientName, error: err.message }));
   }, [router]);
 
-  function logout() {
+  const logout = () => {
     auth.clear();
     router.replace("/");
-  }
+  };
 
   return (
-    <div style={{ display: "grid", gap: 12 }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-        }}
-      >
-        <h2 style={{ margin: 0 }}>Products</h2>
-        <div>
-          <span style={{ marginRight: 12, color: "#666" }}>
+    <main className="min-h-screen bg-gradient-to-b from-rose-50 to-white p-8">
+      <header className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-display font-bold text-gray-900">
+          Marimekko Wholesale
+        </h1>
+        <div className="flex items-center gap-4">
+          <span className="text-gray-500 text-sm">
             {clientName ? `Signed in as ${clientName}` : ""}
           </span>
-          <button
-            onClick={logout}
-            style={{
-              padding: "6px 10px",
-              borderRadius: 8,
-              border: "1px solid #ddd",
-            }}
-          >
+          <Button variant="outline" onClick={logout}>
             Log out
-          </button>
+          </Button>
         </div>
-      </div>
+      </header>
 
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p className="text-red-600 mb-4">{error}</p>}
 
-      <div
-        style={{
-          display: "grid",
-          gap: 12,
-          gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-        }}
-      >
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {products.map((p) => (
           <ProductCard
             key={p["Product code"] || p.EAN}
@@ -77,6 +61,6 @@ export default function ProductsPage() {
           />
         ))}
       </div>
-    </div>
+    </main>
   );
 }

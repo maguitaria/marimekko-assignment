@@ -1,12 +1,15 @@
-export const metadata = { title: "Wholesale Storefront" };
+// app/layout.tsx
+import "./globals.css";
+
+export const metadata = {
+  title: "Marimekko Wholesale",
+  description: "B2B portal for wholesale clients",
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en"><body style={{ fontFamily: "system-ui", margin: 0 }}>
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: 24 }}>
-        <h1>Wholesale Storefront</h1>
-        {children}
-      </div>
-    </body></html>
+    <html lang="en">
+      <body className="min-h-screen bg-background text-foreground">{children}</body>
+    </html>
   );
 }

@@ -1,35 +1,52 @@
-import React from "react";
+"use client";
 
-interface ProductCardProps {
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
+
+export function ProductCard({
+  name,
+  price,
+  stock,
+}: {
   name: string;
   price: number;
   stock: number;
-}
-
-export const ProductCard: React.FC<ProductCardProps> = ({ name, price, stock }) => {
-  const outOfStock = stock === 0;
+}) {
+  const isOutOfStock = stock === 0;
 
   return (
-    <div
-      className="border rounded-xl shadow-sm p-4 flex flex-col justify-between hover:shadow-lg transition"
-      style={{
-        backgroundColor: outOfStock ? "#fff5f5" : "white",
-        opacity: outOfStock ? 0.8 : 1,
-      }}
-    >
-      <h3 className="font-semibold text-lg mb-1">{name}</h3>
-
-      <p className="text-gray-600 text-sm mb-2">
-        Price: <span className="font-medium text-blue-600">€{price.toFixed(2)}</span>
-      </p>
-
-      <p
-        className={`text-sm ${
-          outOfStock ? "text-red-600 font-semibold" : "text-green-600"
-        }`}
+    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+      <Card
+        className={`relative overflow-hidden border-2 rounded-2xl transition-all duration-300
+        ${isOutOfStock ? "border-red-200 bg-red-50" : "border-gray-100 hover:border-rose-400"}
+      `}
       >
-        {outOfStock ? "Out of stock" : `Stock: ${stock}`}
-      </p>
-    </div>
+        <CardHeader>
+          <CardTitle className="font-display text-lg font-semibold">
+            {name}
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent className="space-y-2">
+          <p className="text-gray-700 text-sm">
+            Price: <span className="font-semibold">€{price.toFixed(2)}</span>
+          </p>
+
+          {isOutOfStock ? (
+            <Badge variant="destructive">Out of stock</Badge>
+          ) : (
+            <Badge className="bg-green-500 hover:bg-green-600 text-white">
+              In stock: {stock}
+            </Badge>
+          )}
+        </CardContent>
+
+        {/* Decorative accent */}
+        {!isOutOfStock && (
+          <div className="absolute bottom-0 left-0 h-1 bg-rose-500 w-0 group-hover:w-full transition-all duration-500" />
+        )}
+      </Card>
+    </motion.div>
   );
-};
+}
