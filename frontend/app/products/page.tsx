@@ -7,7 +7,12 @@ import { ProductCard } from "../../components/ProductCard";
 import { useRouter } from "next/navigation";
 
 export default function ProductsPage() {
-  const [{ products, clientName, error }, setState] = useState<{products: any[]; clientName?: string; error?: string}>({ products: [] });
+  const [{ products, clientName, error }, setState] = useState<{
+    products: any[];
+    clientName?: string;
+    error?: string;
+  }>({ products: [] });
+
   const router = useRouter();
 
   useEffect(() => {
@@ -16,8 +21,9 @@ export default function ProductsPage() {
       router.replace("/");
       return;
     }
+
     fetchProducts(token)
-      .then((data) => setState({ products: data.products, clientName: clientName || undefined }))
+      .then((data) => setState({ products: data.products, clientName }))
       .catch((err) => setState({ products: [], error: err.message }));
   }, [router]);
 
@@ -28,16 +34,48 @@ export default function ProductsPage() {
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+        }}
+      >
         <h2 style={{ margin: 0 }}>Products</h2>
         <div>
-          <span style={{ marginRight: 12, color: "#666" }}>{clientName ? `Signed in as ${clientName}` : ""}</span>
-          <button onClick={logout} style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #ddd" }}>Log out</button>
+          <span style={{ marginRight: 12, color: "#666" }}>
+            {clientName ? `Signed in as ${clientName}` : ""}
+          </span>
+          <button
+            onClick={logout}
+            style={{
+              padding: "6px 10px",
+              borderRadius: 8,
+              border: "1px solid #ddd",
+            }}
+          >
+            Log out
+          </button>
         </div>
       </div>
+
       {error && <p style={{ color: "crimson" }}>{error}</p>}
-      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))" }}>
-        {products.map(p => <ProductCard key={p.id} name={p.name} price={p.price} stock={p.stock} />)}
+
+      <div
+        style={{
+          display: "grid",
+          gap: 12,
+          gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+        }}
+      >
+        {products.map((p) => (
+          <ProductCard
+            key={p["Product code"] || p.EAN}
+            name={p["Product Name"]}
+            price={Number(p["Wholesale price"])}
+            stock={p["Available stock"]}
+          />
+        ))}
       </div>
     </div>
   );

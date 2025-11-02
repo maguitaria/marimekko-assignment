@@ -1,11 +1,35 @@
-export function ProductCard({ name, price, stock }: { name: string; price: number; stock: number }) {
+import React from "react";
+
+interface ProductCardProps {
+  name: string;
+  price: number;
+  stock: number;
+}
+
+export const ProductCard: React.FC<ProductCardProps> = ({ name, price, stock }) => {
+  const outOfStock = stock === 0;
+
   return (
-    <div style={{ border: "1px solid #eee", borderRadius: 12, padding: 16 }}>
-      <div style={{ fontWeight: 600 }}>{name}</div>
-      <div style={{ marginTop: 6 }}>Price: €{price.toFixed(2)}</div>
-      <div style={{ marginTop: 6, color: stock > 0 ? "green" : "crimson" }}>
-        Stock: {stock > 0 ? stock : "Out of stock"}
-      </div>
+    <div
+      className="border rounded-xl shadow-sm p-4 flex flex-col justify-between hover:shadow-lg transition"
+      style={{
+        backgroundColor: outOfStock ? "#fff5f5" : "white",
+        opacity: outOfStock ? 0.8 : 1,
+      }}
+    >
+      <h3 className="font-semibold text-lg mb-1">{name}</h3>
+
+      <p className="text-gray-600 text-sm mb-2">
+        Price: <span className="font-medium text-blue-600">€{price.toFixed(2)}</span>
+      </p>
+
+      <p
+        className={`text-sm ${
+          outOfStock ? "text-red-600 font-semibold" : "text-green-600"
+        }`}
+      >
+        {outOfStock ? "Out of stock" : `Stock: ${stock}`}
+      </p>
     </div>
   );
-}
+};
