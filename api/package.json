@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@azure/functions": "^4.0.0",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",
