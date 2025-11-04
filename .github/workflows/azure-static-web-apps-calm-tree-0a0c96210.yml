@@ -1,4 +1,4 @@
-name: Azure Static Web Apps CI/CD
+name: Deploy Frontend (Next.js to Azure Static Web App)
 
 on:
   push:
@@ -9,66 +9,54 @@ on:
     branches:
       - master
 
+env:
+  APP_LOCATION: './frontend'    # Next.js app folder
+  API_LOCATION: './api'         # Optional: if you want API deployed together (can leave blank)
+  OUTPUT_LOCATION: '.next'      # Next.js build output
+  NODE_VERSION: '20.11.1'
+
 jobs:
   build_and_deploy_job:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
-    name: Build and Deploy Job
+    name: Build and Deploy Frontend
     permissions:
       id-token: write
       contents: read
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: true
-          lfs: false
 
-      # ✅ Explicitly use Node 20.11.1 (Next.js 14+ requirement)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.11.1'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
 
-      # Optional: verify the Node version used
-      - name: Check Node version
-        run: node -v
-
-      - name: Install dependencies and build frontend
+      - name: Build Next.js app
+        working-directory: ${{ env.APP_LOCATION }}
         run: |
-          cd frontend
           npm ci
           npm run build
         env:
           NEXT_PUBLIC_API_BASE: ${{ secrets.NEXT_PUBLIC_API_BASE }}
 
-      # Optional: install and build API (if separate)
-      - name: Build API
-        run: |
-          cd api
-          npm ci
-          npm run build
-
-      # Deploy both frontend + API to Azure Static Web Apps
-      - name: Build And Deploy
-        id: builddeploy
+      - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_CALM_TREE_0A0C96210 }}
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           action: "upload"
-          app_location: "./frontend"
-          api_location: "./api"
-          output_location: "build"
-          github_id_token: ${{ steps.idtoken.outputs.result }}
+          app_location: ${{ env.APP_LOCATION }}
+          api_location: ""
+          output_location: ${{ env.OUTPUT_LOCATION }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
-    name: Close Pull Request Job
+    name: Close PR Environment
     steps:
-      - name: Close Pull Request
-        id: closepullrequest
+      - name: Close PR
         uses: Azure/static-web-apps-deploy@v1
         with:
           action: "close"
