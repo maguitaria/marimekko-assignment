@@ -1,7 +1,4 @@
-# Deploy Azure Function App (Node.js backend)
-# Docs: https://github.com/Azure/functions-action
-
-name: Build and Deploy Node.js Azure Function App (./api)
+name: Deploy Azure Function App (Backend)
 
 on:
   push:
@@ -10,10 +7,10 @@ on:
   workflow_dispatch:
 
 env:
-  # Path to the Function App project folder
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: './api'
-  # Node version for build environment
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: './api' # Path to backend code
   NODE_VERSION: '22.x'
+  AZURE_FUNCTIONAPP_NAME: 'clientstore-func'
+  AZURE_FUNCTIONAPP_SLOT: 'Production'
 
 jobs:
   build:
@@ -26,12 +23,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ env.NODE_VERSION }}
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/package-lock.json'
+          cache-dependency-path: 'api/package-lock.json'
 
       - name: Install and build
         working-directory: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
@@ -72,13 +69,13 @@ jobs:
       - name: Azure login
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_E22705890D454983A068049E0FB40463 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_941313FAF70C4475A935AF98FC2BF6E7 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_4B53A4D48CCF465AA8153FC3CBAE94EE }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
       - name: Deploy Function App
         uses: Azure/functions-action@v1
         with:
-          app-name: 'clientstore-func'
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
           package: '.'
-          slot-name: 'Production'
+          slot-name: ${{ env.AZURE_FUNCTIONAPP_SLOT }}

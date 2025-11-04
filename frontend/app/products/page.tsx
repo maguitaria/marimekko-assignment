@@ -24,8 +24,8 @@ export default function ProductsPage() {
     }
 
     fetchProducts(token)
-      .then((data) => setState({ products: data.products, clientName, error: "" }))
-      .catch((err) => setState({ products: [], clientName, error: err.message }));
+      .then((data) => setState({ products: data.products, clientName: clientName || "", error: "" }))
+      .catch((err) => setState({ products: [], clientName: clientName || "", error: err.message }));
   }, [router]);
 
   const logout = () => {
