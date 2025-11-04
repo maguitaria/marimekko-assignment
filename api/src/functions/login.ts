@@ -1,6 +1,6 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
 import jwt from "jsonwebtoken";
-import { resolveClientIdFromCode, getClientProfile } from "../util";
+import { resolveClientIdFromCode, getClientProfile } from "../util/clients";
 
 function cors() {
   const origin = process.env.CORS_ALLOW_ORIGIN || "*";
