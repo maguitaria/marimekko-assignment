@@ -10,8 +10,7 @@ on:
       - master
 
 env:
-  APP_LOCATION: './frontend'    # Next.js app folder
-  API_LOCATION: './api'         # Optional: if you want API deployed together (can leave blank)
+  APP_LOCATION: './frontend'    # Path to Next.js app
   OUTPUT_LOCATION: '.next'      # Next.js build output
   NODE_VERSION: '20.11.1'
 
@@ -34,7 +33,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'frontend/package-lock.json'
 
-      - name: Build Next.js app
+      - name: Install dependencies and build
         working-directory: ${{ env.APP_LOCATION }}
         run: |
           npm ci
@@ -42,20 +41,14 @@ jobs:
         env:
           NEXT_PUBLIC_API_BASE: ${{ secrets.NEXT_PUBLIC_API_BASE }}
 
-      - name: Azure Login with OIDC
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_CALM_TREE_0A0C96210 }}
           action: "upload"
-          app_location: "frontend"
-          output_location: ".next"
-          skip_deploy_on_missing_secrets: true
+          app_location: ${{ env.APP_LOCATION }}
+          output_location: ${{ env.OUTPUT_LOCATION }}
+          api_location: ""
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
@@ -66,5 +59,3 @@ jobs:
         uses: Azure/static-web-apps-deploy@v1
         with:
           action: "close"
-
-
