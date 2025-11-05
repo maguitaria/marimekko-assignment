@@ -14,8 +14,8 @@ This project is a multi-tenant wholesale storefront system built with:
 
 | Component | URL |
 |---------|-----|
-| **Client Storefront (Frontend)** | https://<your-static-web-app>.azurestaticapps.net |
-| **API (Azure Function App)** | https://<your-function-app>.azurewebsites.net/api |
+| **Client Storefront (Frontend)** | [Azure Frontend SWA](https://green-island-0e814a30f.3.azurestaticapps.net) |
+| **API (Azure Function App)** | https://clientstore-func-dcgdbhcfaacresd8.canadacentral-01.azurewebsites.net/api |
 
 > Replace the placeholder URLs above with your actual deployed URLs from Azure.
 
