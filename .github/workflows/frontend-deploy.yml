@@ -10,8 +10,8 @@ on:
       - master
 
 env:
-  APP_LOCATION: './frontend'    # Path to Next.js app
-  OUTPUT_LOCATION: '.next'      # Next.js build output
+  APP_LOCATION: './frontend'
+  OUTPUT_LOCATION: 'out'        # ✅ Correct output folder
   NODE_VERSION: '20.11.1'
 
 jobs:
@@ -38,6 +38,7 @@ jobs:
         run: |
           npm ci
           npm run build
+          npm run export            # ✅ Required for SWA deployment
         env:
           NEXT_PUBLIC_API_BASE: ${{ secrets.NEXT_PUBLIC_API_BASE }}
 
@@ -48,7 +49,7 @@ jobs:
           action: "upload"
           app_location: ${{ env.APP_LOCATION }}
           output_location: ${{ env.OUTPUT_LOCATION }}
-          api_location: ""
+          api_location: ""          # backend is deployed separately
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
