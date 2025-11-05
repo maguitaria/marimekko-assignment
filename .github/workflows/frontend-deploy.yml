@@ -11,7 +11,7 @@ on:
 
 env:
   APP_LOCATION: './frontend'
-  OUTPUT_LOCATION: 'out'        # ✅ Correct output folder
+  OUTPUT_LOCATION: '.next'        # ✅ SSR aware build output
   NODE_VERSION: '20.11.1'
 
 jobs:
@@ -37,8 +37,7 @@ jobs:
         working-directory: ${{ env.APP_LOCATION }}
         run: |
           npm ci
-          npm run build
-          npm run export            # ✅ Required for SWA deployment
+          npm run build     # ✅ No export needed
         env:
           NEXT_PUBLIC_API_BASE: ${{ secrets.NEXT_PUBLIC_API_BASE }}
 
@@ -49,7 +48,7 @@ jobs:
           action: "upload"
           app_location: ${{ env.APP_LOCATION }}
           output_location: ${{ env.OUTPUT_LOCATION }}
-          api_location: ""          # backend is deployed separately
+          api_location: "" # backend is deployed separately
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
