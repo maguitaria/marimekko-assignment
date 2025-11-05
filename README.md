@@ -1,84 +1,150 @@
-# Digital Wholesale Cloud Engineer – Practice Assignment
 
-This repo implements a simple B2B wholesale storefront where two different wholesale clients
-log in with a client-specific code and see **different stock levels and pricing** for the same products.
+# Marimekko Wholesale Storefront
 
-## Architecture
+This project is a multi-tenant wholesale storefront system built with:
 
-- **Frontend**: Next.js 14 (app router). Hosted on Vercel (or Azure Static Web Apps).
-- **Backend**: Azure Functions v4 (Node 18, TypeScript). Endpoints:
-  - `POST /api/login` → `{ code }` → `{ token, clientId, clientName }`
-  - `GET /api/products` (Bearer token) → `{ products: [{ id, name, price, stock }] }`
-- **Infrastructure**: Terraform provisions:
-  - Resource Group, Storage Account, Linux Consumption Function App
-  - App settings for JWT secret, base catalog, and client mapping (no codes hard-coded in repo)
+- **Frontend:** Next.js 16 (App Router) deployed to **Azure Static Web Apps**
+- **Backend:** Azure Functions (Node.js 20) deployed to **Azure Function App**
+- **Infrastructure:** Terraform (resource group, function app, config variables)
+- **Client-specific behavior:** Stock & pricing are filtered dynamically per client
 
-## Client-specific logic
+---
 
-- **Base catalog** (mock) is set via `BASE_CATALOG_JSON` app setting.
-- **Client profiles** and **code→client mapping** are set via `CLIENT_MAP_JSON`.
-- Pricing strategies supported:
-  - `multiplier` e.g., `0.9` for 10% discount
-  - `override` `{ "SKU-1": 39.99, ... }` for per-SKU price overrides
-- Stock strategies supported:
-  - `cap` (max stock visible per SKU)
-  - `override` per-SKU stock
-- The **same catalog** is returned, but `price` and `stock` are computed per client.
+## 🌍 Live Deployment
 
-## Example login codes
+| Component | URL |
+|---------|-----|
+| **Client Storefront (Frontend)** | https://<your-static-web-app>.azurestaticapps.net |
+| **API (Azure Function App)** | https://<your-function-app>.azurewebsites.net/api |
 
-- **Client A**: `1234` → 10% discount, stock capped at 40
-- **Client B**: `5678` → 10% surcharge, stock capped at 15
+> Replace the placeholder URLs above with your actual deployed URLs from Azure.
 
-*(Change these in Terraform/app settings; not hard-coded in source.)*
+---
 
-## Local development
+## 🔐 Client Login Codes
 
-### API
+| Client | Login Code | Effect |
+|-------|------------|--------|
+| **Client A** | `CLIENTA123` | Shows Client A pricing & stock rules |
+| **Client B** | `CLIENTB456` | Shows Client B pricing & stock rules |
+
+No password is required — clients log in by entering their assigned code on the landing screen.
+
+---
+
+## 🧠 How Client-Specific Pricing & Stock Logic Works
+
+The backend stores:
+
+- A **base catalog** (full product list with SKU, name, image, base price)
+- A **client mapping** that adjusts:
+  - Allowed SKUs
+  - Price multipliers or overrides
+  - Stock visibility behavior
+
+When a client logs in:
+
+1. The code identifies the client in the **client map**
+2. The API filters the base catalog
+3. The adjusted data is returned to the frontend
+4. The frontend renders only data allowed for that client
+
+**No client logic is stored in browser code** → prevents data leakage.
+
+---
+
+## 🏗 Project Structure
+
+```
+
+.
+├── frontend/                  # Next.js application
+│   ├── app/                   # App Router (pages)
+│   ├── components/            # UI components
+│   ├── styles/                # Tailwind & font config
+│   └── package.json
+│
+├── api/                       # Azure Function App (Node.js backend)
+│   ├── functions/             # HTTP-trigger functions
+│   ├── catalog.json           # Base product list
+│   ├── clientMap.json         # Per-client rules
+│   └── package.json
+│
+└── infra/                     # Terraform IaC configuration
+├── main.tf
+├── variables.tf
+├── outputs.tf
+└── README.md (optional)
+
+````
+
+---
+
+## ▶️ Local Development
+
+### 1. Start Backend (API)
+
 ```bash
 cd api
-cp local.settings.json.example local.settings.json 
 npm install
-npm run dev   # requires Azure Functions Core Tools installed. Refer to Microsoft Docs # Digital Wholesale Cloud Engineer – Practice Assignment
+npm run start
+````
 
-This repo implements a simple B2B wholesale storefront where two different wholesale clients
-log in with a client-specific code and see **different stock levels and pricing** for the same products.
+The API runs at:
 
-## Architecture
+```
+http://localhost:7071
+```
 
-- **Frontend**: Next.js 14 (app router). Hosted on Vercel (or Azure Static Web Apps).
-- **Backend**: Azure Functions v4 (Node 18, TypeScript). Endpoints:
-  - `POST /api/login` → `{ code }` → `{ token, clientId, clientName }`
-  - `GET /api/products` (Bearer token) → `{ products: [{ id, name, price, stock }] }`
-- **Infrastructure**: Terraform provisions:
-  - Resource Group, Storage Account, Linux Consumption Function App
-  - App settings for JWT secret, base catalog, and client mapping (no codes hard-coded in repo)
+### 2. Start Frontend
 
-## Client-specific logic
-
-- **Base catalog** (mock) is set via `BASE_CATALOG_JSON` app setting.
-- **Client profiles** and **code→client mapping** are set via `CLIENT_MAP_JSON`.
-- Pricing strategies supported:
-  - `multiplier` e.g., `0.9` for 10% discount
-  - `override` `{ "SKU-1": 39.99, ... }` for per-SKU price overrides
-- Stock strategies supported:
-  - `cap` (max stock visible per SKU)
-  - `override` per-SKU stock
-- The **same catalog** is returned, but `price` and `stock` are computed per client.
-
-## Example login codes
-
-- **Client A**: `1234` → 10% discount, stock capped at 40
-- **Client B**: `5678` → 10% surcharge, stock capped at 15
-
-*(Change these in Terraform/app settings; not hard-coded in source.)*
-
-## Local development
-
-### API
 ```bash
-cd api
-cp local.settings.json.example local.settings.json  # edit if needed
+cd frontend
 npm install
-npm run dev   # requires Azure Functions Core Tools http://learn.microsoft.com/en-us/azure/azure-functions/functions-develop-vs-code?tabs=node-v4%2Cpython-v2%2Cisolated-process%2Cquick-create&pivots=programming-language-csharp
+npm run dev
+```
 
+The frontend runs at:
+
+```
+http://localhost:3000
+```
+
+> Ensure the environment variable in `frontend/.env.local` points to your API:
+
+```
+NEXT_PUBLIC_API_BASE=http://localhost:7071
+```
+
+---
+
+## ☁️ Deployment
+
+### Frontend → Azure Static Web Apps (CI/CD)
+
+Triggered automatically on push to `master`.
+Builds `.next` and uploads via GitHub Action.
+
+### Backend → Azure Function App (CI/CD)
+
+GitHub Actions zips and deploys build artifacts using a **Service Principal**.
+
+---
+
+## 🏛 Infrastructure (Terraform)
+
+Terraform provisions:
+
+* Resource Group
+* Azure Function App + Storage
+* App settings (base catalog, client map, CORS settings)
+
+To deploy infrastructure:
+
+```bash
+cd infra
+az login
+terraform init
+terraform plan
+terraform apply
+```
