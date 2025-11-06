@@ -1,17 +1,29 @@
-type ClientProfile = {
-  name: string;
-  pricing: { type: "multiplier"; value: number };
-  stock: { type: "cap"; value: number };
-};
-
-const clients = JSON.parse(process.env.CLIENT_MAP_JSON || "{}");
-const baseCatalog = JSON.parse(process.env.BASE_CATALOG_JSON || "[]");
+import { ClientProfile, CatalogItem } from "./types";
 
 
-export function getProductCatalog(profile: ClientProfile) {
-  return baseCatalog.map((p: any) => ({
-    ...p,
-    price: p.basePrice * profile.pricing.value,
-    stock: Math.min(p.baseStock, profile.stock.value)
-  }));
+export function getProductCatalog(profile: ClientProfile, baseCatalog: CatalogItem[]) {
+  return baseCatalog.map((p) => {
+    // --- Pricing Logic ---
+    let price = p.basePrice;
+    if (profile.pricing.type === "multiplier") {
+      price = p.basePrice * profile.pricing.value;
+    } else if (profile.pricing.type === "override" && profile.pricing.map[p.id] !== undefined) {
+      price = profile.pricing.map[p.id];
+    }
+
+    // --- Stock Logic ---
+    let stock = p.baseStock;
+    if (profile.stock.type === "cap") {
+      stock = Math.min(p.baseStock, profile.stock.value);
+    } else if (profile.stock.type === "override" && profile.stock.map[p.id] !== undefined) {
+      stock = profile.stock.map[p.id];
+    }
+
+    return {
+      id: p.id,
+      name: p.name,
+      price,
+      stock
+    };
+  });
 }
