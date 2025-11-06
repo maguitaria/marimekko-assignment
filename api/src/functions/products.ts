@@ -9,16 +9,25 @@ import loadClientCatalog from "../util/catalog";
  * Applies client-specific stock/pricing rules 
  * to the general base catalog.
  */
+/**
+ * Applies client-specific rules (computed, not from overrides)
+ * to the shared base catalog.
+ */
 function getProductCatalog(profile: any, baseCatalog: any[]) {
+  const multiplier = profile.priceMultiplier ?? 1;
+  const stockFactor = profile.stockFactor ?? 1;
+
   return baseCatalog.map((item) => {
-    const override = profile.products[item["Product code"]] ?? {};
+    const basePrice = parseFloat(item["Wholesale price"]);
+    const adjustedPrice = Number((basePrice * multiplier).toFixed(2));
+    const adjustedStock = Math.round(item["Available stock"] * stockFactor);
 
     return {
       name: item["Product Name"],
       code: item["Product code"],
       color: item["Color"] ?? null,
-      price: override.price ?? item["Wholesale price"],
-      stock: override.stock ?? item["Available stock"],
+      price: adjustedPrice,
+      stock: adjustedStock,
     };
   });
 }
@@ -32,22 +41,19 @@ app.http("products", {
     if (req.method === "OPTIONS") return { status: 204, headers: cors() };
 
     try {
-      // Validate JWT
+     // 2️⃣ Verify token
       const auth = verifyToken(req);
       if (!auth) return { status: 401, body: "Unauthorized", headers: cors() };
 
-      // Lookup client profile
+      // 3️⃣ Load client data
       const profile = getClientProfile(auth.clientId);
       if (!profile) return { status: 404, body: "Client not found", headers: cors() };
 
-      // Load shared base catalog
-      const baseCatalog = loadClientCatalog(auth.clientId); // -> returns array of all core products
-
-      // Apply client specific overrides
+      const baseCatalog = loadClientCatalog(auth.clientId);
       const finalProducts = getProductCatalog(profile, baseCatalog);
 
-      // Return to client
-      return json({ products: finalProducts, clientName: profile.name });
+      // 4️⃣ Return with CORS headers
+      return json({ products: finalProducts, clientName: profile.name }, 200, cors());
     } catch (err: any) {
       ctx.error(err);
       return { status: 500, body: "Server error", headers: cors() };

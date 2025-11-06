@@ -1,9 +1,11 @@
 export function cors() {
-  const origin = process.env.CORS_ALLOW_ORIGIN || "*";
+  const allowedOrigin =
+    process.env.CORS_ALLOW_ORIGIN || "*";
+
   return {
-    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Methods": "GET,POST,OPTIONS"
   };
 }
 
