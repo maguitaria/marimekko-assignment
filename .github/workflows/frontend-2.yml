@@ -24,7 +24,8 @@ jobs:
 
       - name: Build static export
         working-directory: ./frontend
-        run: npm run build
+        run: |
+          NEXT_PUBLIC_API_BASE=${{ secrets.NEXT_PUBLIC_API_BASE }} npm run build
 
       # ✅ Deploy using Deployment Token
       - name: Deploy to Azure Static Web Apps
