@@ -1,19 +1,8 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
 import jwt from "jsonwebtoken";
 import { resolveClientIdFromCode, getClientProfile } from "../util/clients";
+import { cors, json } from "../util/http";
 
-function cors() {
-  const origin = process.env.CORS_ALLOW_ORIGIN || "*";
-  return {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Methods": "GET,POST,OPTIONS"
-  };
-}
-
-function json(data: any, status = 200, headers: Record<string, string> = {}) {
-  return { status, jsonBody: data, headers: { "Content-Type": "application/json", ...headers } };
-}
 
 app.http("login", {
   methods: ["OPTIONS", "POST"],
@@ -37,7 +26,7 @@ app.http("login", {
       return json({ token, clientId, clientName: profile.name }, 200, cors());
     } catch (e: any) {
       ctx.error(e);
-      return { status: 500, body: "Server error", headers: cors() };
+      return json({ error: "Server error" }, 500, cors());
     }
   }
 });
