@@ -8,6 +8,8 @@ on:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_API_BASE: ${{ secrets.NEXT_PUBLIC_API_BASE }}   # <— Move here
 
     steps:
       - name: Checkout repository
@@ -24,9 +26,10 @@ jobs:
 
       - name: Build static export
         working-directory: ./frontend
-        env:
-          NEXT_PUBLIC_API_BASE: ${{ secrets.NEXT_PUBLIC_API_BASE }}
-        run: npm run build
+        run: |
+          echo "NEXT_PUBLIC_API_BASE is $NEXT_PUBLIC_API_BASE"
+          rm -rf .next out   # Clean old builds
+          npm run build
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
