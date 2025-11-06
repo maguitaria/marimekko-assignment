@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 
 // ---------- Config ----------
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") || "http://localhost:7071";
+  process.env.NEXT_PUBLIC_API_BASE;
 
 // Generic response shape for backend errors
 interface ApiError {
