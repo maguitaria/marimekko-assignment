@@ -3,7 +3,7 @@ import { app } from "@azure/functions";
 app.http("index", {
   methods: ["GET"],
   authLevel: "anonymous",
-  route: "",
+  route: "/",
   handler: async (request, context) => {
     return {
       status: 200,
