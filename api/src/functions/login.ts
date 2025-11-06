@@ -10,22 +10,52 @@ app.http("login", {
   route: "login",
   handler: async (req: HttpRequest, ctx: InvocationContext): Promise<HttpResponseInit> => {
     if (req.method === "OPTIONS") return { status: 204, headers: cors() };
-
     try {
       const { code } = (await req.json()) as { code?: string };
-      if (!code) return { status: 400, body: "Missing code", headers: cors() };
 
+      // 1️ Validate input
+      if (!code)
+        return { status: 400, body: "Missing code", headers: cors() };
+
+      // 2️ Resolve client from login code
       const clientId = resolveClientIdFromCode(code);
-      if (!clientId) return { status: 401, body: "Invalid code", headers: cors() };
+      if (!clientId)
+        return { status: 401, body: "Invalid code", headers: cors() };
 
+      // 3️     Load client profile (pricing/stock rules)
       const profile = getClientProfile(clientId);
-      if (!profile) return { status: 500, body: "Client profile not found", headers: cors() };
+      if (!profile)
+        return { status: 500, body: "Client profile not found", headers: cors() };
 
-      const token = jwt.sign({ clientId }, process.env.JWT_SECRET as string, { expiresIn: "2h" });
+      // 4️ Ensure JWT secret exists
+      const secret = process.env.JWT_SECRET;
+      if (!secret) {
+        ctx.error("JWT_SECRET not configured in environment variables.");
+        return { status: 500, body: "Server misconfiguration", headers: cors() };
+      }
 
-      return json({ token, clientId, clientName: profile.name }, 200, cors());
+      // 5️ Generate signed token (explicit algorithm)
+      const token = jwt.sign(
+        { clientId },
+        secret,
+        {
+          algorithm: "HS256", // explicitly set for security clarity
+          expiresIn: "2h",
+        }
+      );
+
+      // 6️ Return JSON response
+      return json(
+        {
+          token,
+          clientId,
+          clientName: profile.name,
+        },
+        200,
+        cors()
+      );
     } catch (e: any) {
-      ctx.error(e);
+      ctx.error("Login error:", e);
       return json({ error: "Server error" }, 500, cors());
     }
   }
