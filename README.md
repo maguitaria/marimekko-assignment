@@ -1,150 +1,281 @@
 
-# Marimekko Wholesale Storefront
 
-This project is a multi-tenant wholesale storefront system built with:
+#  Marimekko B2B Application
 
-- **Frontend:** Next.js 16 (App Router) deployed to **Azure Static Web Apps**
-- **Backend:** Azure Functions (Node.js 20) deployed to **Azure Function App**
-- **Infrastructure:** Terraform (resource group, function app, config variables)
-- **Client-specific behavior:** Stock & pricing are filtered dynamically per client
+This project is a simple **B2B wholesale storefront** that demonstrates how two different clients (Client A and Client B) can log in and view the same product catalog but with **client-specific stock levels and pricing**.
+It includes a **Next.js (static export) frontend**, an **Azure Functions backend**, and **Terraform** configuration for reproducible infrastructure deployment.
 
 ---
 
-## 🌍 Live Deployment
-
-| Component | URL |
-|---------|-----|
-| **Client Storefront (Frontend)** | [Azure Frontend SWA](https://green-island-0e814a30f.3.azurestaticapps.net) |
-| **API (Azure Function App)** | https://clientstore-func-dcgdbhcfaacresd8.canadacentral-01.azurewebsites.net/api |
-
-> Replace the placeholder URLs above with your actual deployed URLs from Azure.
-
----
-
-## 🔐 Client Login Codes
-
-| Client | Login Code | Effect |
-|-------|------------|--------|
-| **Client A** | `CLIENTA123` | Shows Client A pricing & stock rules |
-| **Client B** | `CLIENTB456` | Shows Client B pricing & stock rules |
-
-No password is required — clients log in by entering their assigned code on the landing screen.
-
----
-
-## 🧠 How Client-Specific Pricing & Stock Logic Works
-
-The backend stores:
-
-- A **base catalog** (full product list with SKU, name, image, base price)
-- A **client mapping** that adjusts:
-  - Allowed SKUs
-  - Price multipliers or overrides
-  - Stock visibility behavior
-
-When a client logs in:
-
-1. The code identifies the client in the **client map**
-2. The API filters the base catalog
-3. The adjusted data is returned to the frontend
-4. The frontend renders only data allowed for that client
-
-**No client logic is stored in browser code** → prevents data leakage.
-
----
-
-## 🏗 Project Structure
+##  Architecture Overview
 
 ```
-
-.
-├── frontend/                  # Next.js application
-│   ├── app/                   # App Router (pages)
-│   ├── components/            # UI components
-│   ├── styles/                # Tailwind & font config
-│   └── package.json
+Azure Resource Group
 │
-├── api/                       # Azure Function App (Node.js backend)
-│   ├── functions/             # HTTP-trigger functions
-│   ├── catalog.json           # Base product list
-│   ├── clientMap.json         # Per-client rules
-│   └── package.json
+├── Azure Static Web App  (Frontend)
+│     • Next.js (Static Export)
+│     • Hosted via GitHub Actions
+│     • Uses environment variable: NEXT_PUBLIC_API_BASE
 │
-└── infra/                     # Terraform IaC configuration
-├── main.tf
-├── variables.tf
-├── outputs.tf
-└── README.md (optional)
+└── Azure Function App    (Backend API)
+      • Node.js runtime (~4)
+      • Endpoints:
+            GET  /api/            → HTML index page
+            POST /api/login       → Authenticate client code → JWT
+            GET  /api/products    → Client-specific products
+      • Reads per-client configs from /config/
+      • Env vars: CLIENT_A_CODE, CLIENT_B_CODE, JWT_SECRET
+```
 
-````
+###  Authentication Flow
+
+1. Client enters a login code (`1234` or `5678`).
+2. Backend resolves client ID (`clientA` / `clientB`) from environment variables.
+3. A JWT is generated and returned to the frontend.
+4. All subsequent API calls include the JWT for client identification.
 
 ---
 
-## ▶️ Local Development
+##  Deployed URLs
 
-### 1. Start Backend (API)
+| Component                    | URL                                                                                                                                                                  |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend (Next.js)**       | [https://mango-forest-0de58f81e.3.azurestaticapps.net](https://mango-forest-0de58f81e.3.azurestaticapps.net)                                                         |
+| **Backend (Azure Function)** | [https://clientstore-func-dcgdbhcfaacresd8.canadacentral-01.azurewebsites.net/api](https://clientstore-func-dcgdbhcfaacresd8.canadacentral-01.azurewebsites.net/api) |
+
+---
+
+##  Example Login Codes
+
+| Client   | Code (example) |
+| -------- | -------------- |
+| Client A | `1234`         |
+| Client B | `5678`         |
+
+*(In production, these are stored as environment variables `CLIENT_A_CODE` and `CLIENT_B_CODE`.)*
+
+---
+
+##  Project Structure
+
+```
+frontend/
+  ├── pages/
+  ├── components/
+  ├── public/
+  ├── package.json
+  └── next.config.js
+
+api/
+  ├── index.js            ← Root /api endpoint
+  ├── login.js            ← JWT login
+  ├── products.js         ← Client-specific pricing + stock
+  └── utils/
+        └── clients.js    ← Reads config & maps codes
+
+config/
+  ├── clientA.json
+  └── clientB.json
+
+terraform/
+  ├── main.tf
+  ├── backend.tf
+  ├── frontend.tf
+  ├── providers.tf
+  ├── variables.tf
+  └── outputs.tf
+```
+
+---
+
+## Local Development Setup
+
+### Prerequisites
+
+* Node.js ≥ 18
+* Azure Functions Core Tools
+* Terraform ≥ 1.6
+* Azure CLI (logged in with `az login`)
+
+### Steps
 
 ```bash
+# 1. Clone the repository
+git clone https://github.com/<your_username>/clientstore.git
+cd clientstore
+
+# 2. Set environment variables (for local use)
+cp api/local.settings.example.json api/local.settings.json
+# edit with your CLIENT_A_CODE, CLIENT_B_CODE, JWT_SECRET
+
+# 3. Run backend locally
 cd api
+func start
+
+# 4. Run frontend locally
+cd ../frontend
 npm install
-npm run start
-````
-
-The API runs at:
-
-```
-http://localhost:7071
+NEXT_PUBLIC_API_BASE=http://localhost:7071/api npm run dev
 ```
 
-### 2. Start Frontend
+Open `http://localhost:3000` in your browser.
 
-```bash
-cd frontend
-npm install
-npm run dev
+---
+
+##  Deployment via GitHub Actions
+
+This repository uses **two GitHub Actions workflows**:
+
+### Frontend – Azure Static Web Apps
+
+Located at `.github/workflows/frontend.yml`:
+
+```yaml
+name: Deploy Frontend (Next.js Static Export)
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_API_BASE: ${{ secrets.NEXT_PUBLIC_API_BASE }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+        working-directory: ./frontend
+      - run: npm run build
+        working-directory: ./frontend
+      - uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          app_location: "./frontend"
+          output_location: "out"
 ```
 
-The frontend runs at:
+Required GitHub repository secrets:
 
 ```
-http://localhost:3000
-```
-
-> Ensure the environment variable in `frontend/.env.local` points to your API:
-
-```
-NEXT_PUBLIC_API_BASE=http://localhost:7071
+NEXT_PUBLIC_API_BASE = https://clientstore-func-...azurewebsites.net/api
+AZURE_STATIC_WEB_APPS_API_TOKEN = <token from Azure Static Web App>
 ```
 
 ---
 
-## ☁️ Deployment
+###  Backend – Azure Function App
 
-### Frontend → Azure Static Web Apps (CI/CD)
+You can deploy your backend either manually or via another workflow:
 
-Triggered automatically on push to `master`.
-Builds `.next` and uploads via GitHub Action.
+```yaml
+name: Deploy Backend (Azure Functions)
 
-### Backend → Azure Function App (CI/CD)
+on:
+  push:
+    branches: [ master ]
 
-GitHub Actions zips and deploys build artifacts using a **Service Principal**.
+jobs:
+  deploy_backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Deploy Function App
+        uses: Azure/functions-action@v1
+        with:
+          app-name: "clientstore-func"
+          package: "api"
+        env:
+          CLIENT_A_CODE: ${{ secrets.CLIENT_A_CODE }}
+          CLIENT_B_CODE: ${{ secrets.CLIENT_B_CODE }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+```
+
+Required GitHub secrets:
+
+```
+AZURE_CREDENTIALS = <JSON from az ad sp create-for-rbac>
+CLIENT_A_CODE
+CLIENT_B_CODE
+JWT_SECRET
+```
 
 ---
 
-## 🏛 Infrastructure (Terraform)
+## Infrastructure as Code (Terraform)
 
-Terraform provisions:
+To reproduce the Azure environment:
 
-* Resource Group
-* Azure Function App + Storage
-* App settings (base catalog, client map, CORS settings)
-
-To deploy infrastructure:
+### Setup
 
 ```bash
-cd infra
+cd terraform
 az login
 terraform init
-terraform plan
-terraform apply
+terraform plan -out=tfplan
+terraform apply tfplan
 ```
+
+This provisions:
+
+* Resource group
+* Azure Function App (Node ~4)
+* Storage account
+* (Optional) Azure Static Web App
+* Environment variables and CORS config
+
+To clean up:
+
+```bash
+terraform destroy
+```
+
+---
+
+## How Client Logic Works
+
+Each client’s stock/pricing configuration is defined in `config/clientA.json` and `config/clientB.json`.
+
+Example:
+
+```json
+{
+  "displayName": "Client A",
+  "priceMultiplier": 1.0,
+  "stockOverrides": { "sku-001": 120 }
+}
+```
+
+The backend dynamically loads these using:
+
+```js
+export function getClientProfile(clientId) {
+  const filePath = path.join(__dirname, `../../config/${clientId}.json`);
+  return JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
+```
+
+---
+
+##  Feedback & Troubleshooting
+
+| Problem                     | Likely Cause                                | Fix                                          |
+| --------------------------- | ------------------------------------------- | -------------------------------------------- |
+| `undefined/login` API calls | Frontend env var not injected at build time | Set `NEXT_PUBLIC_API_BASE` in workflow       |
+| `CORS policy blocked`       | Missing CORS header                         | Add frontend URL to Function App CORS config |
+| `Function not found`        | Double slashes in route                     | Use `route: ""` for index function           |
+
+
+
+##  Contributor
+
+**Developer:** Mariia Glushenkova, mariia.glushenkova@gmail.com
+
+
