@@ -24,7 +24,7 @@ export default function ProductsPage() {
     }
 
     fetchProducts(token)
-      .then((data) => setState({ products: data.products, clientName: clientName || "", error: "" }))
+      .then((data) => setState({ products: data.products, clientName: clientName || undefined, error: "" }))
       .catch((err) => setState({ products: [], clientName: clientName || "", error: err.message }));
   }, [router]);
 
@@ -41,7 +41,7 @@ export default function ProductsPage() {
         </h1>
         <div className="flex items-center gap-4">
           <span className="text-gray-500 text-sm">
-            {clientName ? `Signed in as ${clientName}` : ""}
+            {`Signed in as ${clientName}` }
           </span>
           <Button variant="outline" onClick={logout}>
             Log out
@@ -52,14 +52,7 @@ export default function ProductsPage() {
       {error && <p className="text-red-600 mb-4">{error}</p>}
 
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {products.map((p) => (
-          <ProductCard
-            key={p["Product code"] || p.EAN}
-            name={p["Product Name"]}
-            price={Number(p["Wholesale price"])}
-            stock={p["Available stock"]}
-          />
-        ))}
+          {products.map(p => <ProductCard key={p.id} name={p.name} price={p.price} stock={p.stock} />)}
       </div>
     </main>
   );
