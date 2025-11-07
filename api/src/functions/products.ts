@@ -4,30 +4,36 @@ import { verifyToken } from "../util/auth";
 import { getClientProfile } from "../util/clients";
 import loadClientCatalog from "../util/catalog";
 
+import { ProductsResponse, Product, RawCatalogItem, ClientProfile } from "../types/api";
 
 /**
- * Applies client-specific stock/pricing rules 
- * to the general base catalog.
+ * Normalize raw catalog item (string fields → numbers, consistent structure)
  */
+function normalizeProduct(raw: RawCatalogItem): Product {
+  return {
+    id: raw["Product code"],
+    code: raw["Product code"],
+    name: raw["Product Name"],
+    color: raw["Color"] ?? null,
+    price: Number(raw["Wholesale price"]),
+    retailPrice: Number(raw["Retail price"]),
+    stock: Number(raw["Available stock"]),
+  };
+}
+
 /**
- * Applies client-specific rules (computed, not from overrides)
- * to the shared base catalog.
+ * Apply client-specific price & stock rules to normalized products
  */
-function getProductCatalog(profile: any, baseCatalog: any[]) {
+function getProductCatalog(profile: ClientProfile, baseCatalog: RawCatalogItem[]): Product[] {
   const multiplier = profile.priceMultiplier ?? 1;
   const stockFactor = profile.stockFactor ?? 1;
 
-  return baseCatalog.map((item) => {
-    const basePrice = parseFloat(item["Wholesale price"]);
-    const adjustedPrice = Number((basePrice * multiplier).toFixed(2));
-    const adjustedStock = Math.round(item["Available stock"] * stockFactor);
-
+  return baseCatalog.map((raw) => {
+    const product = normalizeProduct(raw);
     return {
-      name: item["Product Name"],
-      code: item["Product code"],
-      color: item["Color"] ?? null,
-      price: adjustedPrice,
-      stock: adjustedStock,
+      ...product,
+      price: Number((product.price * multiplier).toFixed(2)),
+      stock: Math.round(product.stock * stockFactor),
     };
   });
 }
@@ -37,24 +43,28 @@ app.http("products", {
   methods: ["GET", "OPTIONS"],
   authLevel: "anonymous",
   handler: async (req: HttpRequest, ctx: InvocationContext): Promise<HttpResponseInit> => {
-    // CORS preflight
     if (req.method === "OPTIONS") return { status: 204, headers: cors() };
 
     try {
-     // 2️⃣ Verify token
       const auth = verifyToken(req);
-      if (!auth) return { status: 401, body: "Unauthorized", headers: cors() };
+      if (!auth) return json({ error: "Unauthorized" }, 401, cors());
 
-      // 3️⃣ Load client data
       const profile = getClientProfile(auth.clientId);
-      if (!profile) return { status: 404, body: "Client not found", headers: cors() };
+      if (!profile) return json({ error: "Client not found" }, 404, cors());
 
-      const baseCatalog = loadClientCatalog(auth.clientId);
-      const finalProducts = getProductCatalog(profile, baseCatalog);
+      // Load base catalog for this client (raw)
+      const baseCatalog: RawCatalogItem[] = loadClientCatalog(auth.clientId);
 
-      // 4️⃣ Return with CORS headers
-      return json({ products: finalProducts, clientName: profile.name }, 200, cors());
-    } catch (err: any) {
+      // Apply price & stock adjustments
+      const products = getProductCatalog(profile, baseCatalog);
+
+      const response: ProductsResponse = {
+        products,
+        clientName: profile.name,
+      };
+
+      return json(response, 200, cors());
+    } catch (err) {
       ctx.error(err);
       return { status: 500, body: "Server error", headers: cors() };
     }

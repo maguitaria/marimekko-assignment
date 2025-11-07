@@ -1,4 +1,4 @@
-import { ClientProfile, CatalogItem } from "./types";
+import { ClientProfile, CatalogItem } from "./types/types";
 
 
 export function getProductCatalog(profile: ClientProfile, baseCatalog: CatalogItem[]) {
