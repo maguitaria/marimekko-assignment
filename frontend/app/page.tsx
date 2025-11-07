@@ -56,10 +56,10 @@ export default function LoginPage() {
         transition={{ duration: 0.6 }}
       >
         <h1 className="font-display text-4xl md:text-5xl font-bold tracking-wide text-gray-900 mb-2">
-          Marimekko Wholesale Portal
+          Marimekko Wholesale 
         </h1>
         <p className="text-gray-500 text-sm uppercase tracking-wide">
-          Distributor Access
+         B2B portal for wholesale clients
         </p>
       </motion.div>
 
