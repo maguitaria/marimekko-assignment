@@ -1,8 +1,7 @@
 "use client";
-
-import { Product } from "@/types/product";
+import { HealthResponse, Product, ProfileResponse } from "@/types/types";
 import { auth } from "@/lib/auth";
-
+import { ApiResponse } from "@/types/types";
 // ---------- Config ----------
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE;
@@ -69,27 +68,34 @@ export async function loginByCode(code: string): Promise<LoginResponse> {
  * Fetches products for the given client using a valid JWT token.
  * Automatically clears local auth and throws on 401.
  */
-export async function fetchProducts(
-  token?: string,
-  clientId?: string
-): Promise<ProductsResponse> {
-  if (!token) throw new Error("Missing token. Please log in again.");
 
-  const url = clientId ? `/products?clientId=${clientId}` : `/products`;
+export async function fetchProducts(token: string): Promise<ApiResponse<ProductsResponse>> {
+  const res = await fetch(`${API_BASE}/products`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`Fetch products failed (${res.status})`);
+  return res.json();
+}
 
-  try {
-    return await apiFetch<ProductsResponse>(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-  } catch (err: any) {
-    if (err.status === 401) {
-      console.warn("Token expired or unauthorized. Clearing auth...");
-      auth.clear();
-      throw new Error("Session expired. Please log in again.");
-    }
-    throw err;
-  }
+export async function fetchProfile(token: string): Promise<ApiResponse<ProfileResponse>> {
+  const res = await fetch(`${API_BASE}/profile`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`Fetch profile failed (${res.status})`);
+  return res.json();
+}
+
+export async function fetchHealth(): Promise<ApiResponse<HealthResponse>> {
+  const res = await fetch(`${API_BASE}/health`);
+  if (!res.ok) throw new Error(`Fetch health failed (${res.status})`);
+  return res.json();
+}
+
+export async function logout(token: string) : Promise<ApiResponse<{ message: string }>> {
+  const res = await fetch(`${API_BASE}/logout`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`Logout failed (${res.status})`);
+  return res.json();
 }
