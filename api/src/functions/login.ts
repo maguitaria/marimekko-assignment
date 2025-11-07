@@ -24,6 +24,18 @@ app.http("login", {
 
       // 3️     Load client profile (pricing/stock rules)
       const profile = getClientProfile(clientId);
+      console.log('profile: ', profile);
+      // if clientID = clientA, profile = {displayName: "Client A", ...}
+      if (clientId === 'clientA') {
+        console.log('clientA logged in');
+        profile.displayName = "Client A";
+      } else if (clientId === 'clientB') {
+        console.log('clientB logged in');
+        profile.displayName = "Client B";
+      } else {
+        console.log('Unknown client logged in');
+        profile.displayName = "Unknown Client";
+      }
       if (!profile)
         return { status: 500, body: "Client profile not found", headers: cors() };
 
@@ -49,7 +61,7 @@ app.http("login", {
         {
           token,
           clientId,
-          clientName: profile.name,
+          clientName: profile.displayName,
         },
         200,
         cors()

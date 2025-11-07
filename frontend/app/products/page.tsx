@@ -13,7 +13,7 @@ export default function ProductsPage() {
     clientName: "",
     error: "",
   });
-
+console.log(clientName);
   const router = useRouter();
 
   useEffect(() => {
