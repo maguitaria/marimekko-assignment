@@ -27,7 +27,19 @@ export default function DashboardPage() {
 
     Promise.all([fetchProducts(token), fetchProfile(token), fetchHealth()])
       .then(([productData, profileData, healthData]) => {
-        setProducts(productData.products || []);
+        // Check if responses contain error
+        if ('error' in productData) {
+          throw new Error(productData.error);
+        }
+        if ('error' in profileData) {
+          throw new Error(profileData.error);
+        }
+        if ('error' in healthData) {
+          throw new Error(healthData.error);
+        }
+
+        // Set the data - productData is already Product[], not wrapped in 'products'
+        setProducts(productData);
         setProfile(profileData);
         setHealth(healthData);
       })
@@ -40,7 +52,14 @@ export default function DashboardPage() {
 
   const handleLogout = async () => {
     const { token } = auth.get();
-    await logout(token);
+    if (token) {
+      try {
+        await logout(token);
+      } catch (error) {
+        console.error("Logout error:", error);
+        // Continue with logout even if API call fails
+      }
+    }
     auth.clear();
     router.replace("/");
   };
