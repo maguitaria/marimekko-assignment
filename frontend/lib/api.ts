@@ -1,34 +1,19 @@
 "use client";
-import { HealthResponse, Product, ProfileResponse } from "@/types/types";
+import { ApiErrorResponse, HealthResponse, LoginResponse, Product, ProfileResponse } from "@/types/types";
 import { auth } from "@/lib/auth";
 import { ApiResponse } from "@/types/types";
 // ---------- Config ----------
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE;
 
-// Generic response shape for backend errors
-interface ApiError {
-  message: string;
-  status?: number;
-}
 
-// ---------- Types ----------
-export interface LoginResponse {
-  token: string;
-  clientId: string;
-  clientName: string;
-}
-
-export interface ProductsResponse {
-  products: Product[];
-}
 
 // ---------- Helpers ----------
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const text = await res.text();
-    const message = text || res.statusText || "Unknown error";
-    throw { message, status: res.status } as ApiError;
+    const error = text || res.statusText || "Unknown error";
+    throw { error, code: res.status } as ApiErrorResponse;
   }
   return res.json();
 }
@@ -69,7 +54,7 @@ export async function loginByCode(code: string): Promise<LoginResponse> {
  * Automatically clears local auth and throws on 401.
  */
 
-export async function fetchProducts(token: string): Promise<ApiResponse<ProductsResponse>> {
+export async function fetchProducts(token: string): Promise<ApiResponse<Product[]>> {
   const res = await fetch(`${API_BASE}/products`, {
     headers: { Authorization: `Bearer ${token}` },
   });
