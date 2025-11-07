@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/ProductCard";
 import { fetchProducts } from "@/lib/api";
 import { auth } from "@/lib/auth";
-import type { Product, ApiErrorResponse } from "@/types/types";
+import type { Product } from "@/types/types";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -29,7 +29,7 @@ export default function ProductsPage() {
     fetchProducts(token)
       .then((res) => {
         if ("error" in res) throw new Error(res.error);
-        setProducts(res);
+        setProducts(res.products || []);
       })
       .catch((err) => setError(err.message || "Failed to load products"))
       .finally(() => setLoading(false));

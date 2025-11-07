@@ -1,5 +1,5 @@
 "use client";
-import { ApiErrorResponse, HealthResponse, LoginResponse, Product, ProfileResponse } from "@/types/types";
+import { ApiErrorResponse, HealthResponse, LoginResponse, Product, ProfileResponse, ProductsResponse } from "@/types/types";
 import { auth } from "@/lib/auth";
 import { ApiResponse } from "@/types/types";
 // ---------- Config ----------
@@ -54,7 +54,7 @@ export async function loginByCode(code: string): Promise<LoginResponse> {
  * Automatically clears local auth and throws on 401.
  */
 
-export async function fetchProducts(token: string): Promise<ApiResponse<Product[]>> {
+export async function fetchProducts(token: string): Promise<ApiResponse<ProductsResponse>> {
   const res = await fetch(`${API_BASE}/products`, {
     headers: { Authorization: `Bearer ${token}` },
   });

@@ -38,8 +38,8 @@ export default function DashboardPage() {
           throw new Error(healthData.error);
         }
 
-        // Set the data - productData is already Product[], not wrapped in 'products'
-        setProducts(productData);
+        // Set the data - productData is ProductsResponse with products array
+        setProducts(productData.products || []);
         setProfile(profileData);
         setHealth(healthData);
       })
