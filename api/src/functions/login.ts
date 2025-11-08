@@ -39,96 +39,50 @@ import { cors, json } from "../util/http";
  */
 app.http("login", {
   methods: ["OPTIONS", "POST"],
-  authLevel: "anonymous", // Public endpoint for authentication
+  authLevel: "anonymous",
   route: "login",
   handler: async (req: HttpRequest, ctx: InvocationContext): Promise<HttpResponseInit> => {
-    // Handle CORS preflight requests for browser compatibility
     if (req.method === "OPTIONS") return { status: 204, headers: cors() };
-    
+
     try {
-      // Parse the login request body to extract the authentication code
       const { code } = (await req.json()) as { code?: string };
+      if (!code) return json({ error: "Please enter an access code." }, 400, cors());
 
-      // ==========================================
-      // 1️⃣ INPUT VALIDATION
-      // ==========================================
-      // Ensure a login code was provided in the request
-      if (!code)
-        return { status: 400, body: "Missing code", headers: cors() };
-
-      // ==========================================
-      // 2️⃣ CLIENT RESOLUTION
-      // ==========================================
-      // Convert the provided login code to an internal client ID
-      // This mapping is stored securely in environment variables
       const clientId = resolveClientIdFromCode(code);
-      if (!clientId)
-        return { status: 401, body: "Invalid code", headers: cors() };
-
-      // ==========================================
-      // 3️⃣ PROFILE LOADING & DISPLAY NAME SETUP
-      // ==========================================
-      // Load the complete client profile containing pricing and stock rules
-      const profile = getClientProfile(clientId);
-      console.log('profile: ', profile);
-      
-      // Set user-friendly display names for known clients
-      // This provides better UX in the frontend application
-      if (clientId === 'clientA') {
-        console.log('clientA logged in');
-        profile.displayName = "Client A";
-      } else if (clientId === 'clientB') {
-        console.log('clientB logged in');
-        profile.displayName = "Client B";
-      } else {
-        console.log('Unknown client logged in');
-        profile.displayName = "Unknown Client";
+      if (!clientId) {
+        return json({ error: "Invalid access code. Try again." }, 401, cors());
       }
-      
-      // Ensure the client profile was successfully loaded
-      if (!profile)
-        return { status: 500, body: "Client profile not found", headers: cors() };
 
-      // ==========================================
-      // 4️⃣ JWT SECRET VALIDATION
-      // ==========================================
-      // Verify that the JWT signing secret is properly configured
+      const profile = getClientProfile(clientId);
+      if (!profile) {
+        return json({ error: "Client profile not found." }, 500, cors());
+      }
+
+      profile.displayName =
+        clientId === "clientA" ? "Client A" :
+        clientId === "clientB" ? "Client B" :
+        "Unknown Client";
+
       const secret = process.env.JWT_SECRET;
       if (!secret) {
-        ctx.error("JWT_SECRET not configured in environment variables.");
-        return { status: 500, body: "Server misconfiguration", headers: cors() };
+        ctx.error("JWT_SECRET missing");
+        return json({ error: "Server misconfiguration" }, 500, cors());
       }
 
-      // ==========================================
-      // 5️⃣ TOKEN GENERATION
-      // ==========================================
-      // Create a signed JWT token with client identification and expiration
-      const token = jwt.sign(
-        { clientId },                    // Payload: client identifier
-        secret,                          // Signing secret from environment
-        {
-          algorithm: "HS256",            // Use HMAC SHA256 for security
-          expiresIn: "2h",              // Token expires in 2 hours
-        }
+      const token = jwt.sign({ clientId }, secret, {
+        algorithm: "HS256",
+        expiresIn: "2h",
+      });
+
+      return json(
+        { token, clientId, clientName: profile.displayName },
+        200,
+        cors()
       );
 
-      // ==========================================
-      // 6️⃣ SUCCESS RESPONSE
-      // ==========================================
-      // Return the authentication token and client information
-      return json(
-        {
-          token,                         // JWT token for API authentication
-          clientId,                      // Internal client identifier
-          clientName: profile.displayName, // Human-readable client name
-        },
-        200,           // HTTP 200 OK
-        cors()         // Include CORS headers
-      );
     } catch (e: any) {
-      // Log any unexpected errors and return a generic error response
       ctx.error("Login error:", e);
-      return json({ error: "Server error" }, 500, cors());
+      return json({ error: "Unexpected server error." }, 500, cors());
     }
   }
 });

@@ -18,21 +18,27 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json();
 }
 
-async function apiFetch<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
+async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE}${path}`;
-  try {
-    const res = await fetch(url, {
-      ...options,
-      mode: "cors",
-    });
-    return await handleResponse<T>(res);
-  } catch (err: any) {
-    console.error("API error:", err);
-    throw new Error(err.message || "Network error");
+
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+  });
+
+  // Attempt to parse JSON body (even for errors)
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    // Backend returns { error: "message" }
+    const message = data.error || "Request failed. Please try again.";
+    throw new Error(message);
   }
+
+  return data;
 }
 
 // ---------- Login ----------

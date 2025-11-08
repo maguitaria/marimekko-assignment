@@ -6,6 +6,13 @@ This project is a simple **B2B wholesale storefront** that demonstrates how two 
 It includes a **Next.js (static export) frontend**, an **Azure Functions backend**, and **Terraform** configuration for reproducible infrastructure deployment.
 
 ---
+##  Screenshots
+
+| Pages | Preview |
+|--------|---------|
+|Dashboard| ![Dashboard](frontend\public\screenshots\dashboard.png) |
+|Login page| ![Login](frontend\public\screenshots\login.png) |
+| API Health Status  | ![API](frontend\public\screenshots\health_status.png) |
 
 ##  Architecture Overview
 
