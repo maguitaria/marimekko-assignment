@@ -33,6 +33,25 @@ Azure Resource Group
       • Reads per-client configs from /config/
       • Env vars: CLIENT_A_CODE, CLIENT_B_CODE, JWT_SECRET
 ```
+### Client-Specific Pricing & Stock Logic
+
+Each client has an associated profile that defines how product data is personalized for them. The application loads a **shared base product catalog**, and then applies **client-specific business rules** to compute final pricing and stock levels at runtime.
+
+The rules are defined per client in `clientMap.json`:
+
+| Client | Pricing Rule | Stock Rule | Effect |
+|--------|--------------|------------|--------|
+| Client A | Multiplier 0.90 | Stock Cap 40 | Lower price, sees up to 40 units available |
+| Client B | Multiplier 1.10 | Stock Cap 15 | Higher price, sees limited stock availability |
+
+**Why this structure?**
+- It keeps the **base catalog single-sourced**, ensuring product data integrity.
+- Client-specific behavior is applied through **transform functions**, maintaining clean separation of business rules from core data.
+- New clients can be added simply by defining a new entry in the configuration (no code change required).
+- The backend ensures security by computing and returning personalized results server-side — the client never controls pricing logic.
+
+This approach ensures consistency, scalability, and predictable price/stock visibility across different client accounts.
+
 
 ###  Authentication Flow
 
