@@ -48,7 +48,7 @@ Azure Resource Group
 | Component                    | URL                                                                                                                                                                  |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Frontend (Next.js)**       | [https://mango-forest-0de58f81e.3.azurestaticapps.net](https://mango-forest-0de58f81e.3.azurestaticapps.net)                                                         |
-| **Backend (Azure Function)** | [https://clientstore-func-dcgdbhcfaacresd8.canadacentral-01.azurewebsites.net/api](https://clientstore-func-dcgdbhcfaacresd8.canadacentral-01.azurewebsites.net/api) |
+| **Backend (Azure Function)** | [https://clientstore-func-dcgdbhcfaacresd8.canadacentral-01.azurewebsites.net/api](https://clientstore-func-dcgdbhcfaacresd8.canadacentral-01.azurewebsites.net) |
 
 ---
 

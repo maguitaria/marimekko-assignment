@@ -57,21 +57,21 @@ app.http("logout", {
     if (req.method === "OPTIONS") return { status: 204, headers: cors() };
 
     // ==========================================
-    // 1️⃣ TOKEN EXTRACTION
+    //  TOKEN EXTRACTION
     // ==========================================
     // Extract the Bearer token from the Authorization header
     const token = req.headers.get("authorization")?.replace("Bearer ", "");
     if (!token) return json({ error: "Missing token" }, 400, cors());
 
     // ==========================================
-    // 2️⃣ TOKEN VALIDATION
+    //  TOKEN VALIDATION
     // ==========================================
     // Verify the token is valid and not tampered with
     const auth = verifyToken(req);
     if (!auth) return json({ error: "Invalid token" }, 401, cors());
 
     // ==========================================
-    // 3️⃣ TOKEN REVOCATION
+    // TOKEN REVOCATION
     // ==========================================
     // Add the token to the blacklist to prevent future use
     revokedTokens.add(token);
@@ -80,7 +80,7 @@ app.http("logout", {
     ctx.log(`Token revoked for ${auth.clientId}`);
 
     // ==========================================
-    // 4️⃣ SUCCESS RESPONSE
+    //  SUCCESS RESPONSE
     // ==========================================
     return json({ message: "Logout successful" }, 200, cors());
   },
