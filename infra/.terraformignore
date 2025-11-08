@@ -1,0 +1,8 @@
+# Ignore build caches, git, node_modules
+node_modules/
+.git/
+*.log
+*.env
+*.zip
+frontend/
+infra/
